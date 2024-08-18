@@ -55,7 +55,7 @@ pub(crate) fn parse_config(config_str: &str) -> Result<ModelConfig> {
                     let config: JinaBertConfig = serde_json::from_str(config_str)?;
                     ModelConfig::JinaBert(config)
                 }
-                Some("DistilBertForMaskedLM") => {
+                Some("DistilBertForMaskedLM") | Some("DistilBertModel") => {
                     let config: DistilBertConfig = serde_json::from_str(config_str)?;
                     ModelConfig::DistilBert(config)
                 }
