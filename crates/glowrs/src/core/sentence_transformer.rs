@@ -21,6 +21,7 @@ pub struct SentenceTransformer {
     model: Box<dyn EmbedderModel>,
     tokenizer: Tokenizer,
     model_type: ModelType,
+    dims: usize,
 }
 
 impl SentenceTransformer {
@@ -28,11 +29,13 @@ impl SentenceTransformer {
         model: Box<dyn EmbedderModel>,
         tokenizer: Tokenizer,
         model_type: ModelType,
+        dims: usize,
     ) -> Self {
         Self {
             model,
             tokenizer,
             model_type,
+            dims,
         }
     }
 
@@ -75,10 +78,25 @@ impl SentenceTransformer {
             tokenizer.with_padding(Some(pp));
         }
 
+        let max_input_length = st_config.hf_config.max_position_embeddings;
+        if let Some(trunc) = tokenizer.get_truncation_mut() {
+            trunc.max_length = max_input_length;
+        } else {
+            tokenizer.with_truncation(Some(tokenizers::TruncationParams {
+                max_length: max_input_length,
+                ..Default::default()
+            }))?;
+        }
+
         let embedder_model =
             load_pretrained_model(model_weights_path, st_config.embedder_config, device)?;
 
-        Ok(Self::new(embedder_model, tokenizer, st_config.model_type))
+        Ok(Self::new(
+            embedder_model,
+            tokenizer,
+            st_config.model_type,
+            st_config.hf_config.hidden_size,
+        ))
     }
 
     pub fn tokenize<'s, E>(&self, sentences: Vec<E>) -> Result<Vec<Encoding>>
@@ -86,6 +104,10 @@ impl SentenceTransformer {
         E: Into<EncodeInput<'s>> + Send,
     {
         Ok(self.tokenizer.encode_batch_fast(sentences, true)?)
+    }
+
+    pub fn dims(&self) -> usize {
+        self.dims
     }
 
     pub fn encode_batch_with_usage<'s, E>(

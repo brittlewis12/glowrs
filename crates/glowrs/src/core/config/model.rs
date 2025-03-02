@@ -24,6 +24,8 @@ pub(crate) struct BaseModelConfig {
     pub model_type: String,
     #[serde(alias = "n_positions")]
     pub max_position_embeddings: usize,
+    #[serde(alias = "dim")]
+    pub hidden_size: usize,
     #[serde(default)]
     pub pad_token_id: usize,
     pub id2label: Option<HashMap<usize, String>>,
@@ -65,6 +67,7 @@ pub struct SentenceTransformerConfig {
     pub(crate) embedder_config: EmbedderConfig,
     pub(crate) model_type: ModelType,
     pub(crate) tokenizer_config: serde_json::Value,
+    pub(crate) hf_config: BaseModelConfig,
 }
 
 impl SentenceTransformerConfig {

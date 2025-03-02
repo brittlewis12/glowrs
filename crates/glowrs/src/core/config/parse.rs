@@ -37,6 +37,7 @@ pub(crate) fn parse_config(
         embedder_config,
         model_type,
         tokenizer_config,
+        hf_config,
     })
 }
 
@@ -101,11 +102,16 @@ mod test {
     use super::*;
     use std::path::{Path, PathBuf};
 
-    fn parse_config_helper(path: &Path, expected_model_type: ModelType) -> Result<()> {
+    fn parse_config_helper(
+        path: &Path,
+        expected_model_type: ModelType,
+        expected_dims: usize,
+    ) -> Result<()> {
         let model_repo = ModelRepo::from_path(path);
 
         let config = model_repo.get_config()?;
         assert_eq!(config.model_type, expected_model_type);
+        assert_eq!(config.hf_config.hidden_size, expected_dims);
         Ok(())
     }
 
@@ -115,6 +121,7 @@ mod test {
         parse_config_helper(
             model_root.as_path(),
             ModelType::Embedding(PoolingStrategy::Mean),
+            384,
         )
     }
 
@@ -125,6 +132,7 @@ mod test {
     //     parse_config_helper(
     //         model_root.as_path(),
     //         ModelType::Embedding(PoolingStrategy::Splade),
+    //         768,
     //     )
     // }
 
@@ -134,6 +142,7 @@ mod test {
             architectures: vec!["BertForMaskedLM".to_string()],
             model_type: "bert".to_string(),
             max_position_embeddings: 512,
+            hidden_size: 768,
             pad_token_id: 0,
             id2label: None,
             label2id: None,

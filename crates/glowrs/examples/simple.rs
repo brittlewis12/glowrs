@@ -1,4 +1,3 @@
-use glowrs::PoolingStrategy;
 #[allow(dead_code, unused_imports)]
 use std::error::Error;
 
