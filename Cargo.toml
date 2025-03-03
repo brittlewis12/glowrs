@@ -7,9 +7,9 @@ resolver = "2"
 exclude = ["tests", "scripts"]
 
 [workspace.dependencies]
-candle-core = { version = "0.6.0" }
-candle-nn = { version = "0.6.0" }
-candle-transformers = { version = "0.6.0" }
+candle-core = { version = "0.8.0", path = "../candle/candle-core" }
+candle-nn = { version = "0.8.0", path = "../candle/candle-nn" }
+candle-transformers = { version = "0.8.0", path = "../candle/candle-transformers" }
 tokenizers = { version = "0.21.0" }
 clap = { version = "4.5.17" }
 

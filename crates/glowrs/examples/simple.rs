@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .with(tracing_subscriber::fmt::layer()).init();
 
-    println!("Using core {}", app.model_repo);
+    println!("Using model {}", app.model_repo);
     let device = Device::Cpu;
 
     let encoder = SentenceTransformer::builder()

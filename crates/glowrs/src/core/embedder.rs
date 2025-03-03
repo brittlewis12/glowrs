@@ -4,8 +4,10 @@ use candle_nn::VarBuilder;
 use tokenizers::{EncodeInput, Tokenizer};
 
 // Re-exports
+use candle_transformers::models::modernbert::Config as _ModernBertConfig;
 pub use candle_transformers::models::{
     bert::BertModel, distilbert::DistilBertModel, jina_bert::BertModel as JinaBertModel,
+    modernbert::ModernBert,
 };
 
 use crate::core::config::model::{BertConfig, EmbedderConfig, ModelType};
@@ -13,6 +15,20 @@ use crate::core::repo::ModelWeightsPath;
 use crate::core::utils::normalize_l2;
 use crate::pooling::PoolingStrategy;
 use crate::{Result, Usage};
+
+struct ModernBertModel {
+    pub device: Device,
+    model: ModernBert,
+}
+impl ModernBertModel {
+    pub fn load(vb: VarBuilder, config: &_ModernBertConfig) -> Result<Self> {
+        let model = ModernBert::load(vb.clone(), config)?;
+        Ok(Self {
+            device: vb.device().clone(),
+            model,
+        })
+    }
+}
 
 pub(crate) fn load_model(
     vb: VarBuilder,
@@ -26,6 +42,7 @@ where
             BertConfig::JinaBert(cfg_inner) => Box::new(JinaBertModel::new(vb, &cfg_inner)?),
         }),
         EmbedderConfig::DistilBert(cfg) => Ok(Box::new(DistilBertModel::load(vb, &cfg)?)),
+        EmbedderConfig::ModernBert(cfg) => Ok(Box::new(ModernBertModel::load(vb, &cfg)?)),
     }
 }
 
@@ -66,7 +83,7 @@ impl EmbedderModel for BertModel {
     #[inline]
     fn encode(&self, token_ids: &Tensor) -> Result<Tensor> {
         let token_type_ids = token_ids.zeros_like()?;
-        Ok(self.forward(token_ids, &token_type_ids)?)
+        Ok(self.forward(token_ids, &token_type_ids, None)?)
     }
 
     fn get_device(&self) -> &Device {
@@ -97,6 +114,18 @@ impl EmbedderModel for DistilBertModel {
         let mask = Tensor::from_slice(&mask, (size, size), token_ids.device())?;
 
         Ok(self.forward(token_ids, &mask)?)
+    }
+
+    fn get_device(&self) -> &Device {
+        &self.device
+    }
+}
+
+impl EmbedderModel for ModernBertModel {
+    #[inline]
+    fn encode(&self, token_ids: &Tensor) -> Result<Tensor> {
+        let token_type_ids = token_ids.ones_like()?;
+        Ok(self.model.forward(token_ids, &token_type_ids)?)
     }
 
     fn get_device(&self) -> &Device {
@@ -196,10 +225,10 @@ where
     Ok(EmbedOutput { embeddings, usage })
 }
 
-/// Encodes a batch of sentences using the given `core` and `tokenizer`.
+/// Encodes a batch of sentences using the given `model` and `tokenizer`.
 ///
 /// # Arguments
-/// * `core` - A reference to the embedding core to use.
+/// * `model` - A reference to the embedding model to use.
 /// * `tokenizer` - A reference to the tokenizer to use.
 /// * `sentences` - The sentences to encode.
 /// * `normalize` - A flag indicating whether to normalize the embeddings.

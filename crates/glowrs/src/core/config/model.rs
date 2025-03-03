@@ -11,6 +11,7 @@ use crate::Result;
 use candle_transformers::models::bert::Config as _BertConfig;
 use candle_transformers::models::distilbert::Config as DistilBertConfig;
 use candle_transformers::models::jina_bert::Config as _JinaBertConfig;
+use candle_transformers::models::modernbert::Config as ModernBertConfig;
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -53,6 +54,8 @@ pub(crate) enum EmbedderConfig {
     // Roberta(BertConfig),
     #[serde(rename(deserialize = "distilbert"))]
     DistilBert(DistilBertConfig),
+    #[serde(rename(deserialize = "modernbert"))]
+    ModernBert(ModernBertConfig),
 }
 
 /// The embedding strategy used by a given core.
